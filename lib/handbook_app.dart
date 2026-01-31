@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'core/router/router.dart';
+import 'package:flutter_production_architecture/core/router/app_router.dart';
 
 class HandbookApp extends StatelessWidget {
   HandbookApp({super.key});
@@ -12,7 +11,7 @@ class HandbookApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Flutter Production Architecture',
       debugShowCheckedModeBanner: false,
-      
+
       // Auto Route Integration
       routerDelegate: _appRouter.delegate(),
       routeInformationParser: _appRouter.defaultRouteParser(),

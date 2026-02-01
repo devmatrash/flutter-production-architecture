@@ -14,11 +14,20 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+  #route management:
+  auto_route: ^11.1.0
+
+  # dependency injection:
+  get_it: ^9.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
   flutter_lints: ^6.0.0
+  #route management:
+  auto_route_generator: ^10.4.0
+  build_runner: ^2.10.5
 
 flutter:
 

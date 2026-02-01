@@ -5,5 +5,5 @@ class BootstrapDelegates {
 
   Future<void> afterRunApp() async {}
 
-  void onAppError(Object error, StackTrace stack) {}
+  Future<void> onAppError(Object error, StackTrace stack) async {}
 }

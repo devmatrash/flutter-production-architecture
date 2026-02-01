@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_production_architecture/core/bootstrap/app_bootstrap.dart';
@@ -8,12 +7,14 @@ import 'package:flutter_production_architecture/core/injection/injection_contain
 import 'package:flutter_production_architecture/core/providers/app_run_providers.dart';
 import 'package:flutter_production_architecture/handbook_app.dart';
 
+AppBootstrap appBootstrap = AppBootstrap();
+
 void main() {
-  runZonedGuarded<Future<void>>(() async => await run(), (
+  runZonedGuarded<Future<void>>(() async => await runApplication(), (
     Object error,
     StackTrace stack,
   ) {
-    log("Error occurred: $error", stackTrace: stack, name: 'runZonedGuarded');
+    appBootstrap.onAppError(error, stack);
   });
 }
 
@@ -21,8 +22,7 @@ void main() {
  * This method will handle the running app using AppRunTasks Class
  * In this method you will override the app run tasks (before ans after)
  */
-Future<void> run() async {
-  AppBootstrap appBootstrap = AppBootstrap();
+Future<void> runApplication() async {
   // Initialize the widgets binding
   WidgetsFlutterBinding.ensureInitialized();
   // Initialize appRunProviders
@@ -32,5 +32,9 @@ Future<void> run() async {
   // Run the app
   runApp(HandbookApp());
   // Run the app after
-  await appBootstrap.afterRunApp();
+  try {
+    await appBootstrap.afterRunApp();
+  } catch (error, stack) {
+    await appBootstrap.onAppError(error, stack);
+  }
 }

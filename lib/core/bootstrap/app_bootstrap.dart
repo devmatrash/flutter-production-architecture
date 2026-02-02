@@ -19,15 +19,17 @@ import 'package:flutter_production_architecture/core/lifecycle/app_lifecycle.dar
 class AppBootstrap extends BootstrapDelegates {
   @override
   Future<void> beforeRunApp(WidgetsBinding widgetsBinding) async {
-    log('beforeRunApp', name: 'AppBootstrap');
+    log('START: beforeRunApp', name: 'AppBootstrap');
 
     // Initialize AppLifeCycle observer
     await AppLifeCycle.instance.initialize();
+
+    log('END: beforeRunApp', name: 'AppBootstrap');
   }
 
   @override
   Future<void> afterRunApp() async {
-    log('afterRunApp', name: 'AppBootstrap');
+    log('START: afterRunApp', name: 'AppBootstrap');
 
     // Verify AppLifeCycle is initialized
     if (AppLifeCycle.instance.isInitialized) {
@@ -38,6 +40,7 @@ class AppBootstrap extends BootstrapDelegates {
     } else {
       log('Warning: AppLifeCycle failed to initialize', name: 'AppBootstrap');
     }
+    log('END: afterRunApp', name: 'AppBootstrap');
   }
 
   @override

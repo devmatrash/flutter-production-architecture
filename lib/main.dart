@@ -7,14 +7,13 @@ import 'package:flutter_production_architecture/core/injection/injection_contain
 import 'package:flutter_production_architecture/core/providers/app_run_providers.dart';
 import 'package:flutter_production_architecture/handbook_app.dart';
 
-AppBootstrap appBootstrap = AppBootstrap();
-
 void main() {
   runZonedGuarded<Future<void>>(() async => await runApplication(), (
     Object error,
     StackTrace stack,
   ) {
-    appBootstrap.onAppError(error, stack);
+    // Get AppBootstrap from service locator after initialization
+    inject.sl<AppBootstrap>().onAppError(error, stack);
   });
 }
 
@@ -25,12 +24,19 @@ void main() {
 Future<void> runApplication() async {
   // Initialize the widgets binding
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize appRunProviders
+
+  // Initialize appRunProviders - this registers AppBootstrap in service locator
   await inject.init(appRunProviders);
+
+  // Get AppBootstrap from service locator after registration
+  final appBootstrap = inject.sl<AppBootstrap>();
+
   // Run the app before
   await appBootstrap.beforeRunApp(WidgetsBinding.instance);
+
   // Run the app
   runApp(HandbookApp());
+
   // Run the app after
   try {
     await appBootstrap.afterRunApp();

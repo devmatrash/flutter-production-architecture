@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_production_architecture/core/bootstrap/bootstrap_delegates.dart';
+import 'package:flutter_production_architecture/core/lifecycle/app_lifecycle.dart';
 
 /*
  * Handles application bootstrap lifecycle and error management.
@@ -19,11 +20,24 @@ class AppBootstrap extends BootstrapDelegates {
   @override
   Future<void> beforeRunApp(WidgetsBinding widgetsBinding) async {
     log('beforeRunApp', name: 'AppBootstrap');
+
+    // Initialize AppLifeCycle observer
+    await AppLifeCycle.instance.initialize();
   }
 
   @override
   Future<void> afterRunApp() async {
     log('afterRunApp', name: 'AppBootstrap');
+
+    // Verify AppLifeCycle is initialized
+    if (AppLifeCycle.instance.isInitialized) {
+      log(
+        'AppLifeCycle successfully initialized and monitoring',
+        name: 'AppBootstrap',
+      );
+    } else {
+      log('Warning: AppLifeCycle failed to initialize', name: 'AppBootstrap');
+    }
   }
 
   @override

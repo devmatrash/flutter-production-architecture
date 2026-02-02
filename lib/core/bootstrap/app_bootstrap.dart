@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_production_architecture/core/bootstrap/bootstrap_delegates.dart';
+import 'package:flutter_production_architecture/core/cache/cache_service_provider.dart';
 import 'package:flutter_production_architecture/core/lifecycle/app_lifecycle.dart';
 
 /*
@@ -40,6 +41,25 @@ class AppBootstrap extends BootstrapDelegates {
     } else {
       log('Warning: AppLifeCycle failed to initialize', name: 'AppBootstrap');
     }
+
+    // Initialize Cache system
+    try {
+      log('Initializing Cache system...', name: 'AppBootstrap');
+      await CacheServiceProvider.initializeCache();
+      log('Cache system initialized successfully', name: 'AppBootstrap');
+    } catch (e, stackTrace) {
+      log(
+        'CRITICAL: Failed to initialize cache system: $e',
+        name: 'AppBootstrap',
+      );
+      log('Stack trace: $stackTrace', name: 'AppBootstrap');
+      log(
+        'App will continue but cache functionality will be unavailable',
+        name: 'AppBootstrap',
+      );
+      // Don't rethrow - let app continue but cache won't work
+    }
+
     log('END: afterRunApp', name: 'AppBootstrap');
   }
 

@@ -22,9 +22,6 @@ void main() {
  * In this method you will override the app run tasks (before ans after)
  */
 Future<void> runApplication() async {
-  // Initialize the widgets binding
-  WidgetsFlutterBinding.ensureInitialized();
-
   // Initialize appRunProviders - this registers AppBootstrap in service locator
   await inject.init(appRunProviders);
 

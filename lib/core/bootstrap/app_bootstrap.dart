@@ -3,7 +3,6 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter_production_architecture/core/bootstrap/bootstrap_delegates.dart';
 import 'package:flutter_production_architecture/core/cache/cache.dart';
-import 'package:flutter_production_architecture/core/cache/cache_service_provider.dart';
 import 'package:flutter_production_architecture/core/lifecycle/app_lifecycle.dart';
 
 /*

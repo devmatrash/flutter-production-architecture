@@ -1,7 +1,7 @@
 import 'dart:developer';
 
-import 'package:flutter_production_architecture/core/cache/cache_config.dart';
-import 'package:flutter_production_architecture/core/cache/cache_drivers.dart';
+import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
+import 'package:flutter_production_architecture/core/cache/data/datasources/cache_drivers.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

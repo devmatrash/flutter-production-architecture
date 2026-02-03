@@ -1,13 +1,13 @@
 import 'dart:developer';
 
-import 'package:flutter_production_architecture/core/cache/cache_config.dart';
-import 'package:flutter_production_architecture/core/cache/cache_drivers.dart';
-import 'package:flutter_production_architecture/core/cache/cache_manager.dart';
-import 'package:flutter_production_architecture/core/cache/cache_storage.dart';
-import 'package:flutter_production_architecture/core/cache/cache_ttl.dart';
-import 'package:flutter_production_architecture/core/cache/cache_validator.dart';
-import 'package:flutter_production_architecture/core/cache/exceptions/cache_exceptions.dart';
-import 'package:flutter_production_architecture/core/cache/interfaces/i_cache.dart';
+import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
+import 'package:flutter_production_architecture/core/cache/domain/repositories/i_cache.dart';
+import 'package:flutter_production_architecture/core/cache/domain/exceptions/cache_exceptions.dart';
+import 'package:flutter_production_architecture/core/cache/data/datasources/cache_drivers.dart';
+import 'package:flutter_production_architecture/core/cache/data/datasources/cache_manager.dart';
+import 'package:flutter_production_architecture/core/cache/data/datasources/cache_storage.dart';
+import 'package:flutter_production_architecture/core/cache/utils/cache_ttl.dart';
+import 'package:flutter_production_architecture/core/cache/utils/cache_validator.dart';
 
 /// Injectable cache implementation (testable, mockable)
 class CacheImpl implements ICache {

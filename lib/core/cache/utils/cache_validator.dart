@@ -1,4 +1,4 @@
-import 'package:flutter_production_architecture/core/cache/cache_config.dart';
+import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
 
 /// Validates cache key format and constraints
 class CacheValidator {

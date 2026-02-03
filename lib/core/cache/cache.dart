@@ -1,25 +1,35 @@
-import 'dart:developer';
-
 import 'package:flutter_production_architecture/core/cache/cache_config.dart';
-import 'package:flutter_production_architecture/core/cache/cache_drivers.dart';
-import 'package:flutter_production_architecture/core/cache/cache_manager.dart';
-import 'package:flutter_production_architecture/core/cache/cache_storage.dart';
-import 'package:flutter_production_architecture/core/cache/cache_ttl.dart';
-import 'package:flutter_production_architecture/core/cache/cache_validator.dart';
+import 'package:flutter_production_architecture/core/cache/cache_impl.dart';
+import 'package:flutter_production_architecture/core/cache/interfaces/i_cache.dart';
 
 /// Production cache with driver pattern and circuit breaker
+///
+/// This is a static facade that delegates to an injectable CacheImpl instance.
+/// For testing, inject ICache directly into your classes instead of using this static API.
 class Cache {
-  static final _manager = CacheManager();
-  static late CacheTTL _ttl;
-  static late CacheValidator _validator;
+  static ICache? _instance;
+  static ISecureCache? _secureInstance;
 
+  /// Get the cache instance (throws if not initialized)
+  static ICache get instance {
+    if (_instance == null) {
+      throw StateError(
+        'Cache not initialized. Call Cache.initialize() first.',
+      );
+    }
+    return _instance!;
+  }
+
+  /// Initialize cache with configuration
   static Future<void> initialize({
     String? defaultDriver,
     CacheConfig? config,
   }) async {
-    await _manager.initialize(defaultDriver: defaultDriver, config: config);
-    _ttl = CacheTTL(enabled: _manager.config?.enableTTL ?? false);
-    _validator = CacheValidator(_manager.config ?? CacheConfig.defaults());
+    _instance = await CacheImpl.create(
+      defaultDriver: defaultDriver,
+      config: config,
+    );
+    _secureInstance = SecureCacheImpl(_instance!);
   }
 
   static Future<void> set<T>(
@@ -27,140 +37,76 @@ class Cache {
     T value, {
     String? driver,
     Duration? ttl,
-  }) async {
-    _validator.validate(key);
+  }) =>
+      instance.set<T>(key, value, driver: driver, ttl: ttl);
 
-    final targetDriver = _manager.getDriver(driver);
-    final serialized = CacheSerializer.serialize<T>(value);
+  static Future<T?> get<T>(String key, {String? driver}) =>
+      instance.get<T>(key, driver: driver);
 
-    try {
-      await targetDriver.set(key, serialized);
+  static Future<bool> has(String key, {String? driver}) =>
+      instance.has(key, driver: driver);
 
-      if (ttl != null) {
-        _ttl.set(key, ttl);
-      }
-    } catch (e) {
-      if (targetDriver.name != 'memory') {
-        if (_manager.config?.logFallbacks == true) {
-          log('Driver ${targetDriver.name} failed, using memory', name: 'Cache');
-        }
-        await _manager.drivers[CacheDriverType.memory]!.set(key, serialized);
-      } else {
-        rethrow;
-      }
-    }
-  }
+  static Future<void> remove(String key, {String? driver}) =>
+      instance.remove(key, driver: driver);
 
-  static Future<T?> get<T>(String key, {String? driver}) async {
-    _validator.validate(key);
+  static Future<void> clear({String? driver}) => instance.clear(driver: driver);
 
-    if (_ttl.isExpired(key)) {
-      await remove(key, driver: driver);
-      return null;
-    }
+  static Future<List<String>> keys({String? driver}) =>
+      instance.keys(driver: driver);
 
-    final targetDriver = _manager.getDriver(driver);
-
-    try {
-      final raw = await targetDriver.get(key);
-      if (raw == null) return null;
-
-      return CacheSerializer.deserialize<T>(raw);
-    } catch (e) {
-      log('Get failed for key $key: $e', name: 'Cache');
-      return null;
-    }
-  }
-
-  static Future<bool> has(String key, {String? driver}) async {
-    _validator.validate(key);
-    if (_ttl.isExpired(key)) return false;
-
-    final targetDriver = _manager.getDriver(driver);
-    return await targetDriver.has(key);
-  }
-
-  static Future<void> remove(String key, {String? driver}) async {
-    _validator.validate(key);
-
-    final targetDriver = _manager.getDriver(driver);
-    await targetDriver.remove(key);
-    _ttl.remove(key);
-  }
-
-  static Future<void> clear({String? driver}) async {
-    final targetDriver = _manager.getDriver(driver);
-    final driverKeys = await targetDriver.keys();
-
-    _ttl.removeMultiple(driverKeys);
-    await targetDriver.clear();
-  }
-
-  static Future<List<String>> keys({String? driver}) async {
-    final targetDriver = _manager.getDriver(driver);
-    return await targetDriver.keys();
-  }
-
-  static Future<int> size({String? driver}) async =>
-      (await keys(driver: driver)).length;
+  static Future<int> size({String? driver}) => instance.size(driver: driver);
 
   static CacheSecureProxy get secure => CacheSecureProxy._();
-
 
   static Future<void> setMultiple(
     Map<String, dynamic> items, {
     String? driver,
     Duration? ttl,
-  }) async {
-    for (final entry in items.entries) {
-      await set(entry.key, entry.value, driver: driver, ttl: ttl);
-    }
-  }
+  }) =>
+      instance.setMultiple(items, driver: driver, ttl: ttl);
 
   static Future<Map<String, T?>> getMultiple<T>(
     List<String> keys, {
     String? driver,
-  }) async {
-    final results = await Future.wait(
-      keys.map((key) => get<T>(key, driver: driver)),
-    );
-    return Map.fromIterables(keys, results);
-  }
+  }) =>
+      instance.getMultiple<T>(keys, driver: driver);
 
   static Future<void> removeMultiple(
     List<String> keys, {
     String? driver,
-  }) async {
-    await Future.wait(keys.map((key) => remove(key, driver: driver)));
-  }
+  }) =>
+      instance.removeMultiple(keys, driver: driver);
 
+  static Future<void> clearAll() => instance.clearAll();
 
-  static Future<void> clearAll() async {
-    await _manager.clearAllDrivers();
-    _ttl.clear();
-  }
+  static Future<Map<String, dynamic>> getStats() => instance.getStats();
 
-  static Future<Map<String, dynamic>> getStats() =>
-      _manager.getStats((driver) => size(driver: driver));
-
-  static bool get isInitialized => _manager.isInitialized;
-  static String? get defaultDriver => _manager.defaultDriver;
-  static Map<String, bool> get driverHealth => _manager.driverHealth;
+  static bool get isInitialized => _instance?.isInitialized ?? false;
+  static String? get defaultDriver => instance.defaultDriver;
+  static Map<String, bool> get driverHealth => instance.driverHealth;
 }
 
 /// Proxy for secure storage operations
 class CacheSecureProxy {
   CacheSecureProxy._();
-  static const _driver = 'secure_storage';
+
+  ISecureCache get _secure {
+    if (Cache._secureInstance == null) {
+      throw StateError(
+        'Cache not initialized. Call Cache.initialize() first.',
+      );
+    }
+    return Cache._secureInstance!;
+  }
 
   Future<void> set<T>(String key, T value, {Duration? ttl}) =>
-      Cache.set<T>(key, value, driver: _driver, ttl: ttl);
+      _secure.set<T>(key, value, ttl: ttl);
 
-  Future<T?> get<T>(String key) => Cache.get<T>(key, driver: _driver);
+  Future<T?> get<T>(String key) => _secure.get<T>(key);
 
-  Future<bool> has(String key) => Cache.has(key, driver: _driver);
+  Future<bool> has(String key) => _secure.has(key);
 
-  Future<void> remove(String key) => Cache.remove(key, driver: _driver);
+  Future<void> remove(String key) => _secure.remove(key);
 
-  Future<void> clear() => Cache.clear(driver: _driver);
+  Future<void> clear() => _secure.clear();
 }

@@ -10,6 +10,9 @@ class CacheConfig {
   /// Maximum items per driver to prevent memory bloat
   final int maxItemsPerDriver;
 
+  /// Maximum key length for validation (prevents storage issues)
+  final int maxKeyLength;
+
   /// Enable batch operations for performance optimization
   final bool enableBatching;
 
@@ -19,6 +22,7 @@ class CacheConfig {
   const CacheConfig({
     this.enableTTL = false, // Explicit opt-in
     this.maxItemsPerDriver = 1000, // Reasonable default
+    this.maxKeyLength = 250, // Standard key length limit
     this.enableBatching = true, // Performance optimization
     this.logFallbacks = true, // Operational visibility
   });
@@ -30,11 +34,24 @@ class CacheConfig {
   factory CacheConfig.production() => const CacheConfig(
     enableTTL: true,
     maxItemsPerDriver: 2000,
+    maxKeyLength: 250,
+    // Standard production limit
     enableBatching: true,
+    logFallbacks: true,
+  );
+
+  /// Development configuration with relaxed limits
+  factory CacheConfig.development() => const CacheConfig(
+    enableTTL: false,
+    maxItemsPerDriver: 100,
+    maxKeyLength: 100,
+    // Shorter keys for development
+    enableBatching: false,
+    // Simpler debugging
     logFallbacks: true,
   );
 
   @override
   String toString() =>
-      'CacheConfig(ttl: $enableTTL, maxItems: $maxItemsPerDriver)';
+      'CacheConfig(ttl: $enableTTL, maxItems: $maxItemsPerDriver, maxKeyLength: $maxKeyLength)';
 }

@@ -482,7 +482,7 @@ class Cache {
   /// Validate cache key for production safety
   static bool _isValidKey(String key) {
     if (key.isEmpty) return false;
-    if (key.length > 250) return false; // Reasonable key length limit
+    if (key.length > (_config?.maxKeyLength ?? 250)) return false;
     if (key.contains('\n') || key.contains('\r')) return false;
     if (key.startsWith('_') || key.endsWith('_ttl')) {
       return false; // Reserved patterns
@@ -493,8 +493,9 @@ class Cache {
   /// Sanitize and validate cache key
   static String _validateKey(String key) {
     if (!_isValidKey(key)) {
+      final maxLength = _config?.maxKeyLength ?? 250;
       throw ArgumentError(
-        'Invalid cache key: "$key". Keys must be non-empty, under 250 characters, '
+        'Invalid cache key: "$key". Keys must be non-empty, under $maxLength characters, '
         'without newlines, and not start with underscore or end with "_ttl".',
       );
     }

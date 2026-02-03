@@ -71,11 +71,11 @@ class Cache {
     try {
       _sharedPrefs = await SharedPreferences.getInstance();
       _driverHealth['shared_prefs'] = true;
-      log('✅ SharedPreferences driver available', name: 'Cache');
+      log('SharedPreferences driver available', name: 'Cache');
     } catch (e) {
       _driverHealth['shared_prefs'] = false;
       if (_config?.logFallbacks == true) {
-        log('❌ SharedPreferences driver failed: $e', name: 'Cache');
+        log('SharedPreferences driver failed: $e', name: 'Cache');
       }
     }
 
@@ -87,17 +87,17 @@ class Cache {
         ),
       );
       _driverHealth['secure_storage'] = true;
-      log('✅ FlutterSecureStorage driver available', name: 'Cache');
+      log('FlutterSecureStorage driver available', name: 'Cache');
     } catch (e) {
       _driverHealth['secure_storage'] = false;
       if (_config?.logFallbacks == true) {
-        log('❌ FlutterSecureStorage driver failed: $e', name: 'Cache');
+        log('FlutterSecureStorage driver failed: $e', name: 'Cache');
       }
     }
 
     // Memory driver is always available
     _driverHealth['memory'] = true;
-    log('✅ Memory driver available', name: 'Cache');
+    log('Memory driver available', name: 'Cache');
   }
 
   /// Detect the best available driver based on health checks
@@ -119,7 +119,7 @@ class Cache {
 
     // Check TTL configuration
     if (ttl != null && _config?.enableTTL != true) {
-      log('⚠️  TTL ignored - not enabled in configuration', name: 'Cache');
+      log('WARNING: TTL ignored - not enabled in configuration', name: 'Cache');
     }
 
     await _setWithDriver<T>(targetDriver, key, value, ttl: ttl);
@@ -503,7 +503,7 @@ class CacheSecureProxy {
         // Fallback to memory with warning
         if (Cache._config?.logFallbacks == true) {
           log(
-            '⚠️  SecureStorage unavailable, using memory fallback for: $key',
+            'WARNING: SecureStorage unavailable, using memory fallback for: $key',
             name: 'Cache',
           );
         }

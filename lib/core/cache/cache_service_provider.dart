@@ -27,10 +27,7 @@ class CacheServiceProvider implements ServiceProvider {
 
   /// Enhanced cache initialization with production configuration and fallbacks
   static Future<void> initializeCache() async {
-    log(
-      '🚀 Starting enhanced cache initialization...',
-      name: 'CacheServiceProvider',
-    );
+    log('Starting enhanced cache initialization', name: 'CacheServiceProvider');
 
     try {
       // Initialize with shared_prefs as default (your requirement)
@@ -42,33 +39,33 @@ class CacheServiceProvider implements ServiceProvider {
       // Log initialization success and driver status
       final stats = await Cache.getStats();
       log(
-        '✅ Cache initialization completed successfully',
+        'Cache initialization completed successfully',
         name: 'CacheServiceProvider',
       );
-      log('📊 Cache Status: $stats', name: 'CacheServiceProvider');
+      log('Cache Status: $stats', name: 'CacheServiceProvider');
 
       // Alert if using fallback drivers
       final driverHealth = Cache.driverHealth;
       if (driverHealth['shared_prefs'] != true) {
         log(
-          '🚨 OPERATIONAL ALERT: SharedPreferences unavailable - using memory fallback',
+          'OPERATIONAL ALERT: SharedPreferences unavailable - using memory fallback',
           name: 'CacheServiceProvider',
         );
         log(
-          '🔍 This may indicate iOS Simulator, plugin issues, or CI environment',
+          'This may indicate iOS Simulator, plugin issues, or CI environment',
           name: 'CacheServiceProvider',
         );
       }
 
       if (driverHealth['secure_storage'] != true) {
         log(
-          '⚠️  WARNING: FlutterSecureStorage unavailable - secure data will use memory fallback',
+          'WARNING: FlutterSecureStorage unavailable - secure data will use memory fallback',
           name: 'CacheServiceProvider',
         );
       }
     } catch (e, stackTrace) {
       log(
-        '❌ CRITICAL: Cache initialization failed: $e',
+        'CRITICAL: Cache initialization failed: $e',
         name: 'CacheServiceProvider',
       );
       log('Stack trace: $stackTrace', name: 'CacheServiceProvider');
@@ -76,7 +73,7 @@ class CacheServiceProvider implements ServiceProvider {
       // Emergency fallback - try memory-only initialization
       try {
         log(
-          '🆘 Attempting emergency memory-only initialization...',
+          'Attempting emergency memory-only initialization',
           name: 'CacheServiceProvider',
         );
 
@@ -90,16 +87,16 @@ class CacheServiceProvider implements ServiceProvider {
         );
 
         log(
-          '⚠️  Emergency cache initialized - ALL data is temporary',
+          'Emergency cache initialized - ALL data is temporary',
           name: 'CacheServiceProvider',
         );
         log(
-          '🚨 CRITICAL: Platform storage completely unavailable',
+          'CRITICAL: Platform storage completely unavailable',
           name: 'CacheServiceProvider',
         );
       } catch (emergencyError) {
         log(
-          '💥 FATAL: Even emergency cache initialization failed: $emergencyError',
+          'FATAL: Even emergency cache initialization failed: $emergencyError',
           name: 'CacheServiceProvider',
         );
         rethrow; // If even memory cache fails, something is fundamentally wrong

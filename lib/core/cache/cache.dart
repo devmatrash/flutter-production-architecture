@@ -31,11 +31,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class Cache {
   static String? _defaultDriver;
   static CacheConfig? _config;
-  static Map<String, dynamic> _memoryCache = {};
-  static Map<String, DateTime> _memoryTTL = {};
+  static final Map<String, dynamic> _memoryCache = {};
+  static final Map<String, DateTime> _memoryTTL = {};
   static SharedPreferences? _sharedPrefs;
   static FlutterSecureStorage? _secureStorage;
-  static Map<String, bool> _driverHealth = {};
+  static final Map<String, bool> _driverHealth = {};
 
   /// Initialize cache with optional default driver and configuration
   static Future<void> initialize({
@@ -115,6 +115,7 @@ class Cache {
     String? driver,
     Duration? ttl,
   }) async {
+    _validateKey(key); // Validate key before processing
     final targetDriver = driver ?? _defaultDriver ?? 'memory';
 
     // Check TTL configuration
@@ -127,18 +128,21 @@ class Cache {
 
   /// Retrieve a value with optional driver override
   static Future<T?> get<T>(String key, {String? driver}) async {
+    _validateKey(key); // Validate key before processing
     final targetDriver = driver ?? _defaultDriver ?? 'memory';
     return await _getWithDriver<T>(targetDriver, key);
   }
 
   /// Check if key exists with optional driver override
   static Future<bool> has(String key, {String? driver}) async {
+    _validateKey(key); // Validate key before processing
     final targetDriver = driver ?? _defaultDriver ?? 'memory';
     return await _hasWithDriver(targetDriver, key);
   }
 
   /// Remove a key with optional driver override
   static Future<void> remove(String key, {String? driver}) async {
+    _validateKey(key); // Validate key before processing
     final targetDriver = driver ?? _defaultDriver ?? 'memory';
     await _removeWithDriver(targetDriver, key);
   }
@@ -474,6 +478,28 @@ class Cache {
 
     log('Memory cache evicted $removeCount items', name: 'Cache');
   }
+
+  /// Validate cache key for production safety
+  static bool _isValidKey(String key) {
+    if (key.isEmpty) return false;
+    if (key.length > 250) return false; // Reasonable key length limit
+    if (key.contains('\n') || key.contains('\r')) return false;
+    if (key.startsWith('_') || key.endsWith('_ttl')) {
+      return false; // Reserved patterns
+    }
+    return true;
+  }
+
+  /// Sanitize and validate cache key
+  static String _validateKey(String key) {
+    if (!_isValidKey(key)) {
+      throw ArgumentError(
+        'Invalid cache key: "$key". Keys must be non-empty, under 250 characters, '
+        'without newlines, and not start with underscore or end with "_ttl".',
+      );
+    }
+    return key;
+  }
 }
 
 /*
@@ -484,6 +510,7 @@ class CacheSecureProxy {
 
   /// Store secure value with optional TTL
   Future<void> set<T>(String key, T value, {Duration? ttl}) async {
+    Cache._validateKey(key); // Validate key before processing
     try {
       if (Cache._driverHealth['secure_storage'] == true) {
         final serialized = CacheSerializer.serialize<T>(value);
@@ -519,6 +546,7 @@ class CacheSecureProxy {
 
   /// Get secure value
   Future<T?> get<T>(String key) async {
+    Cache._validateKey(key); // Validate key before processing
     try {
       if (Cache._driverHealth['secure_storage'] == true) {
         final raw = await Cache._secureStorage!.read(key: key);
@@ -539,6 +567,7 @@ class CacheSecureProxy {
 
   /// Check if secure key exists
   Future<bool> has(String key) async {
+    Cache._validateKey(key); // Validate key before processing
     try {
       if (Cache._driverHealth['secure_storage'] == true) {
         return await Cache._secureStorage!.containsKey(key: key);
@@ -551,6 +580,7 @@ class CacheSecureProxy {
 
   /// Remove secure key
   Future<void> remove(String key) async {
+    Cache._validateKey(key); // Validate key before processing
     try {
       if (Cache._driverHealth['secure_storage'] == true) {
         await Cache._secureStorage!.delete(key: key);

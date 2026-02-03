@@ -27,7 +27,7 @@ class Cache {
   }) async {
     _instance = await CacheImpl.create(
       defaultDriver: defaultDriver,
-      config: config,
+      config: config ?? CacheConfig.defaults(),
     );
     _secureInstance = SecureCacheImpl(_instance!);
   }

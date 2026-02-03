@@ -29,7 +29,8 @@ class CacheImpl implements ICache {
     CacheConfig? config,
   }) async {
     final manager = CacheManager();
-    await manager.initialize(defaultDriver: defaultDriver, config: config);
+    final cacheConfig = config ?? CacheConfig.defaults();
+    await manager.initialize(defaultDriver: defaultDriver, config: cacheConfig);
 
     final ttl = CacheTTL(enabled: manager.config?.enableTTL ?? false);
     final validator = CacheValidator(manager.config ?? CacheConfig.defaults());

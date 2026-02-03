@@ -30,10 +30,10 @@ class CacheServiceProvider implements ServiceProvider {
     log('Starting enhanced cache initialization', name: 'CacheServiceProvider');
 
     try {
-      // Initialize with shared_prefs as default (your requirement)
+      // Initialize with shared_prefs as default
       await Cache.initialize(
         defaultDriver: 'shared_prefs',
-        config: CacheConfig.production(),
+        config: CacheConfig.defaults(),
       );
 
       // Log initialization success and driver status

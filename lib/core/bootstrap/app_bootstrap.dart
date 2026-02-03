@@ -47,7 +47,7 @@ class AppBootstrap extends BootstrapDelegates {
     try {
       log('Initializing enhanced cache system...', name: 'AppBootstrap');
       await CacheServiceProvider.initializeCache();
-      log('✅ Cache system initialized successfully', name: 'AppBootstrap');
+      log('Cache system initialized successfully', name: 'AppBootstrap');
 
       // PRODUCTION HEALTH CHECK: Verify cache functionality
       await _performEnhancedCacheHealthCheck();

@@ -81,7 +81,6 @@ class CacheServiceProvider implements ServiceProvider {
           defaultDriver: 'memory',
           config: CacheConfig(
             enableTTL: false, // Disable TTL for emergency mode
-            maxItemsPerDriver: 100, // Lower memory usage
             logFallbacks: true, // Keep logging enabled
           ),
         );

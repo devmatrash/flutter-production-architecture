@@ -1,7 +1,7 @@
 import 'dart:developer';
 
-import 'package:flutter_production_architecture/core/cache/cache.dart';
-import 'package:flutter_production_architecture/core/cache/cache_config.dart';
+import 'package:flutter_production_architecture/core/cache/presentation/cache_facade.dart';
+import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
 import 'package:flutter_production_architecture/core/providers/service_provider.dart';
 import 'package:get_it/get_it.dart';
 
@@ -30,10 +30,10 @@ class CacheServiceProvider implements ServiceProvider {
     log('Starting enhanced cache initialization', name: 'CacheServiceProvider');
 
     try {
-      // Initialize with shared_prefs as default (your requirement)
+      // Initialize with shared_prefs as default
       await Cache.initialize(
         defaultDriver: 'shared_prefs',
-        config: CacheConfig.production(),
+        config: CacheConfig.defaults(),
       );
 
       // Log initialization success and driver status
@@ -81,7 +81,6 @@ class CacheServiceProvider implements ServiceProvider {
           defaultDriver: 'memory',
           config: CacheConfig(
             enableTTL: false, // Disable TTL for emergency mode
-            maxItemsPerDriver: 100, // Lower memory usage
             logFallbacks: true, // Keep logging enabled
           ),
         );

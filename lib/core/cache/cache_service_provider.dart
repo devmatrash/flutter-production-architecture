@@ -1,18 +1,18 @@
 import 'dart:developer';
 
 import 'package:flutter_production_architecture/core/cache/cache.dart';
-import 'package:flutter_production_architecture/core/cache/regular_cache.dart';
-import 'package:flutter_production_architecture/core/cache/secure_cache.dart';
+import 'package:flutter_production_architecture/core/cache/cache_config.dart';
 import 'package:flutter_production_architecture/core/providers/service_provider.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 /*
- * CacheServiceProvider - Prepares cache services for later initialization
+ * CacheServiceProvider - Enhanced cache service provider with driver-based architecture
  *
- * Note: Actual cache initialization is deferred to the bootstrap phase
- * to ensure Flutter plugins are fully initialized before accessing SharedPreferences.
+ * Features:
+ * - Circuit breaker pattern with automatic fallback to memory
+ * - Production-ready configuration management
+ * - Comprehensive error handling and logging
+ * - Driver health monitoring and fallback alerts
  */
 class CacheServiceProvider implements ServiceProvider {
   @override
@@ -25,48 +25,82 @@ class CacheServiceProvider implements ServiceProvider {
     );
   }
 
-  /// Cache initialization function - called during bootstrap phase
+  /// Enhanced cache initialization with production configuration and fallbacks
   static Future<void> initializeCache() async {
+    log('Starting enhanced cache initialization', name: 'CacheServiceProvider');
+
     try {
-      log('Cache initialization process...', name: 'CacheServiceProvider');
-      final SharedPreferences sharedPreferences =
-          await SharedPreferences.getInstance();
-
-      log('Initializing FlutterSecureStorage...', name: 'CacheServiceProvider');
-
-      // Initialize FlutterSecureStorage
-      const secureStorage = FlutterSecureStorage(
-        iOptions: IOSOptions(
-          accessibility: KeychainAccessibility.first_unlock_this_device,
-        ),
+      // Initialize with shared_prefs as default (your requirement)
+      await Cache.initialize(
+        defaultDriver: 'shared_prefs',
+        config: CacheConfig.production(),
       );
 
-      log(
-        'Creating cache storage implementations...',
-        name: 'CacheServiceProvider',
-      );
-
-      // Create cache storage implementations
-      final regularStorage = RegularCache(sharedPreferences);
-      final secureStorageImpl = SecureCache(secureStorage);
-
-      log('Initializing Cache class...', name: 'CacheServiceProvider');
-
-      // Initialize the static Cache class
-      Cache.initialize(
-        regularStorage: regularStorage,
-        secureStorage: secureStorageImpl,
-      );
-
+      // Log initialization success and driver status
+      final stats = await Cache.getStats();
       log(
         'Cache initialization completed successfully',
         name: 'CacheServiceProvider',
       );
+      log('Cache Status: $stats', name: 'CacheServiceProvider');
+
+      // Alert if using fallback drivers
+      final driverHealth = Cache.driverHealth;
+      if (driverHealth['shared_prefs'] != true) {
+        log(
+          'OPERATIONAL ALERT: SharedPreferences unavailable - using memory fallback',
+          name: 'CacheServiceProvider',
+        );
+        log(
+          'This may indicate iOS Simulator, plugin issues, or CI environment',
+          name: 'CacheServiceProvider',
+        );
+      }
+
+      if (driverHealth['secure_storage'] != true) {
+        log(
+          'WARNING: FlutterSecureStorage unavailable - secure data will use memory fallback',
+          name: 'CacheServiceProvider',
+        );
+      }
     } catch (e, stackTrace) {
-      // Log the error but don't crash the app
-      log('Failed to initialize cache: $e', name: 'CacheServiceProvider');
+      log(
+        'CRITICAL: Cache initialization failed: $e',
+        name: 'CacheServiceProvider',
+      );
       log('Stack trace: $stackTrace', name: 'CacheServiceProvider');
-      rethrow;
+
+      // Emergency fallback - try memory-only initialization
+      try {
+        log(
+          'Attempting emergency memory-only initialization',
+          name: 'CacheServiceProvider',
+        );
+
+        await Cache.initialize(
+          defaultDriver: 'memory',
+          config: CacheConfig(
+            enableTTL: false, // Disable TTL for emergency mode
+            maxItemsPerDriver: 100, // Lower memory usage
+            logFallbacks: true, // Keep logging enabled
+          ),
+        );
+
+        log(
+          'Emergency cache initialized - ALL data is temporary',
+          name: 'CacheServiceProvider',
+        );
+        log(
+          'CRITICAL: Platform storage completely unavailable',
+          name: 'CacheServiceProvider',
+        );
+      } catch (emergencyError) {
+        log(
+          'FATAL: Even emergency cache initialization failed: $emergencyError',
+          name: 'CacheServiceProvider',
+        );
+        rethrow; // If even memory cache fails, something is fundamentally wrong
+      }
     }
   }
 }

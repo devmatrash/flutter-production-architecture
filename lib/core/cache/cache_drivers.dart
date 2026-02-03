@@ -1,14 +1,6 @@
 import 'dart:developer';
 
-/*
- * CacheDriverType - Enum for driver names (type-safe, centralized)
- *
- * Benefits:
- * - Prevents typos ('memory' vs 'Memory')
- * - IDE autocomplete support
- * - Compile-time validation
- * - Single source of truth for driver names
- */
+/// Driver types for cache storage backends
 enum CacheDriverType {
   memory('memory'),
   sharedPrefs('shared_prefs'),
@@ -17,25 +9,19 @@ enum CacheDriverType {
   const CacheDriverType(this.value);
   final String value;
 
-  /// Create from string value (for backward compatibility)
   static CacheDriverType? fromString(String? value) {
     if (value == null) return null;
-    return CacheDriverType.values.firstWhere(
-      (type) => type.value == value,
-      orElse: () => CacheDriverType.memory, // Default fallback
+    return values.firstWhere(
+      (t) => t.value == value,
+      orElse: () => memory,
     );
   }
 }
 
-/*
- * CacheDriver - Abstract driver interface for storage backends
- *
- * Why: Eliminates massive switch-case duplication in every method
- * Each driver implements its own behavior - no repetitive conditionals
- */
+/// Abstract storage driver interface
 abstract class CacheDriver {
   CacheDriverType get type;
-  String get name => type.value; // Backward compatible
+  String get name => type.value;
   bool get isAvailable;
 
   Future<void> set(String key, String value);
@@ -46,9 +32,7 @@ abstract class CacheDriver {
   Future<List<String>> keys();
 }
 
-/*
- * MemoryDriver - In-memory cache (always available, no persistence)
- */
+/// In-memory cache driver (always available, non-persistent)
 class MemoryDriver extends CacheDriver {
   final Map<String, String> _cache = {};
 
@@ -92,11 +76,9 @@ class MemoryDriver extends CacheDriver {
   int get size => _cache.length;
 }
 
-/*
- * SharedPrefsDriver - Persistent storage via SharedPreferences
- */
+/// SharedPreferences driver for persistent storage
 class SharedPrefsDriver extends CacheDriver {
-  final dynamic _prefs; // SharedPreferences instance
+  final dynamic _prefs;
 
   SharedPrefsDriver(this._prefs);
 
@@ -148,11 +130,9 @@ class SharedPrefsDriver extends CacheDriver {
   }
 }
 
-/*
- * SecureStorageDriver - Encrypted storage via FlutterSecureStorage
- */
+/// FlutterSecureStorage driver for encrypted storage
 class SecureStorageDriver extends CacheDriver {
-  final dynamic _storage; // FlutterSecureStorage instance
+  final dynamic _storage;
 
   SecureStorageDriver(this._storage);
 

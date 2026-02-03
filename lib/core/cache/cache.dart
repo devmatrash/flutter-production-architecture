@@ -6,29 +6,12 @@ import 'package:flutter_production_architecture/core/cache/cache_storage.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/*
- * Cache - Minimized production cache with driver-based architecture
- *
- * Reduced from 608 lines to ~250 lines by extracting driver logic
- *
- * Features:
- * - Driver pattern eliminates switch-case duplication
- * - Circuit breaker with automatic fallback
- * - TTL support (optional)
- * - Clean, maintainable code
- *
- * Usage:
- * ```dart
- * await Cache.initialize(defaultDriver: 'shared_prefs');
- * await Cache.set<String>('username', 'john_doe');
- * await Cache.secure.set<String>('token', 'jwt_here');
- * ```
- */
+/// Production cache with driver pattern and circuit breaker
 class Cache {
   static CacheConfig? _config;
   static final Map<CacheDriverType, CacheDriver> _drivers = {};
   static CacheDriver? _defaultDriver;
-  static final Map<String, DateTime> _ttlMap = {}; // Centralized TTL tracking
+  static final Map<String, DateTime> _ttlMap = {};
 
   /// Initialize cache with drivers and configuration
   static Future<void> initialize({
@@ -79,9 +62,6 @@ class Cache {
     }
   }
 
-  // ==================== CORE CACHE OPERATIONS ====================
-
-  /// Store a value with optional driver override and TTL
   static Future<void> set<T>(
     String key,
     T value, {
@@ -157,8 +137,14 @@ class Cache {
   /// Clear all keys in driver
   static Future<void> clear({String? driver}) async {
     final targetDriver = _getDriver(driver);
+
+    // Only remove TTL entries for keys in this driver
+    final driverKeys = await targetDriver.keys();
+    for (final key in driverKeys) {
+      _ttlMap.remove(key);
+    }
+
     await targetDriver.clear();
-    _ttlMap.clear(); // Clear all TTL entries
   }
 
   /// Get all keys from driver
@@ -173,11 +159,8 @@ class Cache {
     return allKeys.length;
   }
 
-  // ==================== SECURE CACHE ACCESS ====================
-
   static CacheSecureProxy get secure => CacheSecureProxy._();
 
-  // ==================== BATCH OPERATIONS ====================
 
   static Future<void> setMultiple(
     Map<String, dynamic> items, {
@@ -206,7 +189,6 @@ class Cache {
     await Future.wait(keys.map((key) => remove(key, driver: driver)));
   }
 
-  // ==================== UTILITY METHODS ====================
 
   static Future<void> clearAll() async {
     for (final driver in _drivers.values) {
@@ -240,9 +222,6 @@ class Cache {
   static Map<String, bool> get driverHealth =>
       {for (final e in _drivers.entries) e.key.value: e.value.isAvailable};
 
-  // ==================== INTERNAL HELPERS ====================
-
-  /// Get driver by name or default (supports both string and enum)
   static CacheDriver _getDriver(String? driverName) {
     if (driverName != null) {
       // Convert string to enum type
@@ -293,9 +272,7 @@ class Cache {
   }
 }
 
-/*
- * CacheSecureProxy - Secure cache operations
- */
+/// Proxy for secure storage operations (uses secure_storage driver)
 class CacheSecureProxy {
   CacheSecureProxy._();
 

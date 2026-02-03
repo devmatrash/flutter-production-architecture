@@ -106,7 +106,7 @@ class Cache {
         if (_config?.logFallbacks == true) {
           log('Driver ${targetDriver.name} failed, using memory', name: 'Cache');
         }
-        await _drivers['memory']!.set(key, serialized);
+        await _drivers[CacheDriverType.memory]!.set(key, serialized);
       } else {
         rethrow;
       }

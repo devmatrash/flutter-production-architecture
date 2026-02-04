@@ -11,10 +11,14 @@ enum CacheDriverType {
 
   static CacheDriverType? fromString(String? value) {
     if (value == null) return null;
-    return values.firstWhere(
-      (t) => t.value == value,
-      orElse: () => memory,
-    );
+
+    try {
+      return values.firstWhere((t) => t.value == value);
+    } catch (e) {
+      throw ArgumentError(
+        'Invalid cache driver: "$value". Valid drivers are: ${values.map((t) => t.value).join(", ")}',
+      );
+    }
   }
 }
 

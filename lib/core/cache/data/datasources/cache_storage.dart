@@ -3,50 +3,63 @@ import 'dart:convert';
 /// Handles type serialization/deserialization for cache storage
 class CacheSerializer {
   static String serialize<T>(T value) {
-    switch (T) {
-      case const (String):
-        return value as String;
-      case const (int):
-      case const (double):
-      case const (bool):
-        return value.toString();
-      case const (Map<String, dynamic>):
-        return jsonEncode(value);
-      default:
-        if (value is Map<String, dynamic>) return jsonEncode(value);
+    // Handle primitives
+    if (value is String) return value;
+    if (value is int || value is double || value is bool) {
+      return value.toString();
+    }
 
-        try {
-          final json = (value as dynamic).toJson();
-          return jsonEncode(json);
-        } catch (e) {
-          throw UnsupportedError(
-            'Type $T must implement toJson() or be a primitive type',
-          );
-        }
+    // Handle Map<String, dynamic>
+    if (value is Map<String, dynamic>) {
+      return jsonEncode(value);
+    }
+
+    // Handle List
+    if (value is List) {
+      return jsonEncode(value);
+    }
+
+    // Handle objects with toJson
+    try {
+      final json = (value as dynamic).toJson();
+      return jsonEncode(json);
+    } catch (e) {
+      throw UnsupportedError(
+        'Cannot serialize type $T. '
+        'Type must be a primitive (String, int, double, bool), '
+        'Map<String, dynamic>, List, or implement toJson() method. '
+        'Error: $e',
+      );
     }
   }
 
   static T deserialize<T>(String raw) {
-    switch (T) {
-      case const (String):
-        return raw as T;
-      case const (int):
-        return int.parse(raw) as T;
-      case const (double):
-        return double.parse(raw) as T;
-      case const (bool):
-        return (raw.toLowerCase() == 'true') as T;
-      case const (Map<String, dynamic>):
-        return jsonDecode(raw) as T;
-      default:
-        try {
-          final json = jsonDecode(raw) as Map<String, dynamic>;
-          return (T as dynamic).fromJson(json) as T;
-        } catch (e) {
-          throw UnsupportedError(
-            'Type $T must have a fromJson factory constructor',
-          );
-        }
+    // Handle primitives
+    if (T == String) return raw as T;
+    if (T == int) return int.parse(raw) as T;
+    if (T == double) return double.parse(raw) as T;
+    if (T == bool) return (raw.toLowerCase() == 'true') as T;
+
+    // Try to decode as JSON first
+    try {
+      final decoded = jsonDecode(raw);
+
+      // If it's already the right type (for Map and List)
+      if (decoded is T) return decoded;
+
+      // Handle objects with fromJson
+      if (decoded is Map<String, dynamic>) {
+        return (T as dynamic).fromJson(decoded) as T;
+      }
+
+      return decoded as T;
+    } catch (e) {
+      throw UnsupportedError(
+        'Cannot deserialize type $T. '
+        'Type must be a primitive (String, int, double, bool), '
+        'Map<String, dynamic>, List, or have a static fromJson(Map<String, dynamic>) factory. '
+        'Error: $e',
+      );
     }
   }
 }

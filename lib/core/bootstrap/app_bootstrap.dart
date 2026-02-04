@@ -48,8 +48,6 @@ class AppBootstrap extends BootstrapDelegates {
       await CacheServiceProvider.initializeCache();
       log('Cache system initialized successfully', name: 'AppBootstrap');
 
-      // PRODUCTION HEALTH CHECK: Verify cache functionality
-      await _performEnhancedCacheHealthCheck();
     } catch (e, stackTrace) {
       log(
         'CRITICAL: Cache system initialization failed: $e',
@@ -64,82 +62,6 @@ class AppBootstrap extends BootstrapDelegates {
     }
 
     log('END: afterRunApp', name: 'AppBootstrap');
-  }
-
-  /// Performs comprehensive health check for enhanced driver-based cache system
-  Future<void> _performEnhancedCacheHealthCheck() async {
-    try {
-      log('Performing enhanced cache health check', name: 'AppBootstrap');
-
-      if (!Cache.isInitialized) {
-        log('Cache not properly initialized', name: 'AppBootstrap');
-        return;
-      }
-
-      // Get comprehensive cache statistics
-      final stats = await Cache.getStats();
-      log('Cache Statistics: $stats', name: 'AppBootstrap');
-
-      // Test default driver functionality
-      const testKey = 'bootstrap_health_check';
-      const testValue = 'success';
-
-      // Test regular cache with default driver
-      await Cache.set<String>(testKey, testValue);
-      final retrievedValue = await Cache.get<String>(testKey);
-
-      if (retrievedValue == testValue) {
-        log(
-          'Default cache driver functional test passed',
-          name: 'AppBootstrap',
-        );
-        await Cache.remove(testKey); // Clean up
-      } else {
-        log(
-          'Default cache driver functional test failed',
-          name: 'AppBootstrap',
-        );
-      }
-
-      // Test secure cache functionality
-      await Cache.secure.set<String>(testKey, testValue);
-      final secureRetrieved = await Cache.secure.get<String>(testKey);
-
-      if (secureRetrieved == testValue) {
-        log('Secure cache functional test passed', name: 'AppBootstrap');
-        await Cache.secure.remove(testKey); // Clean up
-      } else {
-        log('Secure cache functional test failed', name: 'AppBootstrap');
-      }
-
-      // Test driver override functionality
-      await Cache.set<String>(testKey, testValue, driver: 'memory');
-      final memoryRetrieved = await Cache.get<String>(
-        testKey,
-        driver: 'memory',
-      );
-
-      if (memoryRetrieved == testValue) {
-        log('Driver override functional test passed', name: 'AppBootstrap');
-        await Cache.remove(testKey, driver: 'memory'); // Clean up
-      } else {
-        log('Driver override functional test failed', name: 'AppBootstrap');
-      }
-
-      // Log driver health status
-      final driverHealth = Cache.driverHealth;
-      log('Driver Health Status: $driverHealth', name: 'AppBootstrap');
-
-      // Alert about fallback usage
-      if (Cache.defaultDriver == 'memory') {
-        log(
-          'WARNING: Using memory as default driver - check platform storage',
-          name: 'AppBootstrap',
-        );
-      }
-    } catch (e) {
-      log('Enhanced cache health check failed: $e', name: 'AppBootstrap');
-    }
   }
 
   @override

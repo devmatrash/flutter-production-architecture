@@ -4,6 +4,7 @@ import 'package:flutter_production_architecture/core/cache/domain/entities/cache
 import 'package:flutter_production_architecture/core/cache/domain/repositories/i_cache.dart';
 import 'package:flutter_production_architecture/core/cache/domain/exceptions/cache_exceptions.dart';
 import 'package:flutter_production_architecture/core/cache/domain/events/cache_event.dart';
+import 'package:flutter_production_architecture/core/cache/domain/strategies/cache_driver_strategy.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_drivers.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_manager.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_storage.dart';
@@ -136,7 +137,9 @@ class CacheImpl implements ICache {
       );
     }
 
-    if (_ttl.isExpired(key)) {
+    // Check for expiration with atomic version tracking
+    final expiredEntry = _ttl.getIfExpired(key);
+    if (expiredEntry != null) {
       // Get value before removing for event notification
       dynamic lastValue;
       try {
@@ -149,20 +152,24 @@ class CacheImpl implements ICache {
         // Ignore errors when getting expired value
       }
 
-      await remove(key, driver: driver);
+      // Atomic removal - only if version hasn't changed
+      if (_ttl.removeIfVersionMatches(key, expiredEntry.version)) {
+        await _manager.getDriver(driver).remove(key);
 
-      // Notify subscribers about expiration
-      _subscriptions.notify(CacheEvent(
-        key: key,
-        type: CacheEventType.expired,
-        oldValue: lastValue,
-        timestamp: DateTime.now(),
-      ));
+        // Notify subscribers about expiration
+        _subscriptions.notify(CacheEvent(
+          key: key,
+          type: CacheEventType.expired,
+          oldValue: lastValue,
+          timestamp: DateTime.now(),
+        ));
 
-      throw CacheTTLExpiredException(
-        key: key,
-        expiredAt: DateTime.now(),
-      );
+        throw CacheTTLExpiredException(
+          key: key,
+          expiredAt: expiredEntry.expiresAt,
+        );
+      }
+      // else: Version changed, key was updated - continue to get fresh data
     }
 
     final targetDriver = _manager.getDriver(driver);
@@ -344,21 +351,22 @@ class CacheImpl implements ICache {
       _subscriptions.unsubscribeAll(callback);
 }
 
-/// Secure cache implementation
+/// Secure cache implementation using strategy pattern
 class SecureCacheImpl implements ISecureCache {
   final ICache _cache;
-  static const _driver = 'secure_storage';
+  final CacheDriverStrategy _strategy;
 
-  SecureCacheImpl(this._cache);
+  SecureCacheImpl(this._cache, [CacheDriverStrategy? strategy])
+      : _strategy = strategy ?? SecureStorageDriverStrategy();
 
   @override
   Future<void> set<T>(String key, T value, {Duration? ttl}) =>
-      _cache.set<T>(key, value, driver: _driver, ttl: ttl);
+      _cache.set<T>(key, value, driver: _strategy.driverType.value, ttl: ttl);
 
   @override
   Future<T?> get<T>(String key) async {
     try {
-      return await _cache.get<T>(key, driver: _driver);
+      return await _cache.get<T>(key, driver: _strategy.driverType.value);
     } on CacheMissException {
       return null;
     } on CacheTTLExpiredException {
@@ -367,11 +375,11 @@ class SecureCacheImpl implements ISecureCache {
   }
 
   @override
-  Future<bool> has(String key) => _cache.has(key, driver: _driver);
+  Future<bool> has(String key) => _cache.has(key, driver: _strategy.driverType.value);
 
   @override
-  Future<void> remove(String key) => _cache.remove(key, driver: _driver);
+  Future<void> remove(String key) => _cache.remove(key, driver: _strategy.driverType.value);
 
   @override
-  Future<void> clear() => _cache.clear(driver: _driver);
+  Future<void> clear() => _cache.clear(driver: _strategy.driverType.value);
 }

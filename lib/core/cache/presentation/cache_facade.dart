@@ -1,5 +1,6 @@
 import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
 import 'package:flutter_production_architecture/core/cache/domain/repositories/i_cache.dart';
+import 'package:flutter_production_architecture/core/cache/domain/events/cache_event.dart';
 import 'package:flutter_production_architecture/core/cache/data/repositories/cache_repository_impl.dart';
 
 /// Production cache with driver pattern and circuit breaker
@@ -84,6 +85,22 @@ class Cache {
   static bool get isInitialized => _instance?.isInitialized ?? false;
   static String? get defaultDriver => instance.defaultDriver;
   static Map<String, bool> get driverHealth => instance.driverHealth;
+
+  /// Subscribe to changes for a specific key
+  static void subscribe(String key, void Function(CacheEvent event) callback) =>
+      instance.subscribe(key, callback);
+
+  /// Unsubscribe from a specific key
+  static void unsubscribe(String key, void Function(CacheEvent event) callback) =>
+      instance.unsubscribe(key, callback);
+
+  /// Subscribe to all cache changes
+  static void subscribeAll(void Function(String key, CacheEvent event) callback) =>
+      instance.subscribeAll(callback);
+
+  /// Unsubscribe from all cache changes
+  static void unsubscribeAll(void Function(String key, CacheEvent event) callback) =>
+      instance.unsubscribeAll(callback);
 }
 
 /// Proxy for secure storage operations

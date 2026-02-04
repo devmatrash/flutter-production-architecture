@@ -3,17 +3,20 @@ import 'dart:developer';
 import 'package:flutter_production_architecture/core/cache/domain/entities/cache_config.dart';
 import 'package:flutter_production_architecture/core/cache/domain/repositories/i_cache.dart';
 import 'package:flutter_production_architecture/core/cache/domain/exceptions/cache_exceptions.dart';
+import 'package:flutter_production_architecture/core/cache/domain/events/cache_event.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_drivers.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_manager.dart';
 import 'package:flutter_production_architecture/core/cache/data/datasources/cache_storage.dart';
 import 'package:flutter_production_architecture/core/cache/utils/cache_ttl.dart';
 import 'package:flutter_production_architecture/core/cache/utils/cache_validator.dart';
+import 'package:flutter_production_architecture/core/cache/utils/cache_subscription_manager.dart';
 
 /// Injectable cache implementation (testable, mockable)
 class CacheImpl implements ICache {
   final CacheManager _manager;
   final CacheTTL _ttl;
   final CacheValidator _validator;
+  final CacheSubscriptionManager _subscriptions = CacheSubscriptionManager();
 
   CacheImpl({
     required CacheManager manager,
@@ -54,6 +57,14 @@ class CacheImpl implements ICache {
         cause: e,
         stackTrace: stack,
       );
+    }
+
+    // Get old value for event notification
+    T? oldValue;
+    try {
+      oldValue = await get<T>(key, driver: driver);
+    } catch (_) {
+      // Key doesn't exist - this will be a creation event
     }
 
     final targetDriver = _manager.getDriver(driver);
@@ -101,6 +112,15 @@ class CacheImpl implements ICache {
         );
       }
     }
+
+    // Notify subscribers after successful set
+    _subscriptions.notify(CacheEvent(
+      key: key,
+      type: oldValue == null ? CacheEventType.created : CacheEventType.updated,
+      value: value,
+      oldValue: oldValue,
+      timestamp: DateTime.now(),
+    ));
   }
 
   @override
@@ -117,7 +137,28 @@ class CacheImpl implements ICache {
     }
 
     if (_ttl.isExpired(key)) {
+      // Get value before removing for event notification
+      dynamic lastValue;
+      try {
+        final targetDriver = _manager.getDriver(driver);
+        final raw = await targetDriver.get(key);
+        if (raw != null) {
+          lastValue = CacheSerializer.deserialize<T>(raw);
+        }
+      } catch (_) {
+        // Ignore errors when getting expired value
+      }
+
       await remove(key, driver: driver);
+
+      // Notify subscribers about expiration
+      _subscriptions.notify(CacheEvent(
+        key: key,
+        type: CacheEventType.expired,
+        oldValue: lastValue,
+        timestamp: DateTime.now(),
+      ));
+
       throw CacheTTLExpiredException(
         key: key,
         expiredAt: DateTime.now(),
@@ -181,9 +222,25 @@ class CacheImpl implements ICache {
       );
     }
 
+    // Get value before removing for event notification
+    dynamic lastValue;
+    try {
+      lastValue = await get(key, driver: driver);
+    } catch (_) {
+      // Key doesn't exist or error getting it
+    }
+
     final targetDriver = _manager.getDriver(driver);
     await targetDriver.remove(key);
     _ttl.remove(key);
+
+    // Notify subscribers after successful removal
+    _subscriptions.notify(CacheEvent(
+      key: key,
+      type: CacheEventType.removed,
+      oldValue: lastValue,
+      timestamp: DateTime.now(),
+    ));
   }
 
   @override
@@ -193,6 +250,13 @@ class CacheImpl implements ICache {
 
     _ttl.removeMultiple(driverKeys);
     await targetDriver.clear();
+
+    // Notify subscribers after successful clear
+    _subscriptions.notify(CacheEvent(
+      key: driver ?? '*',
+      type: CacheEventType.cleared,
+      timestamp: DateTime.now(),
+    ));
   }
 
   @override
@@ -262,6 +326,22 @@ class CacheImpl implements ICache {
 
   @override
   Map<String, bool> get driverHealth => _manager.driverHealth;
+
+  @override
+  void subscribe(String key, void Function(CacheEvent event) callback) =>
+      _subscriptions.subscribe(key, callback);
+
+  @override
+  void unsubscribe(String key, void Function(CacheEvent event) callback) =>
+      _subscriptions.unsubscribe(key, callback);
+
+  @override
+  void subscribeAll(void Function(String key, CacheEvent event) callback) =>
+      _subscriptions.subscribeAll(callback);
+
+  @override
+  void unsubscribeAll(void Function(String key, CacheEvent event) callback) =>
+      _subscriptions.unsubscribeAll(callback);
 }
 
 /// Secure cache implementation

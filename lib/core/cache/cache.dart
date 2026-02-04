@@ -1,5 +1,6 @@
 /*
  * Cache module - Clean Architecture implementation
+ *
  * This is the main entry point for the cache module.
  * It re-exports the public API while maintaining clean architecture.
  */
@@ -11,6 +12,7 @@ export 'presentation/cache_facade.dart' show Cache, CacheSecureProxy;
 export 'domain/repositories/i_cache.dart';
 export 'domain/entities/cache_config.dart';
 export 'domain/exceptions/cache_exceptions.dart';
+export 'domain/events/cache_event.dart';
 
 // Data Layer (for advanced usage and DI setup)
 export 'data/repositories/cache_repository_impl.dart';

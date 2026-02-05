@@ -32,9 +32,9 @@ This codebase evolves alongside the articles. Each part introduces a new archite
 
 | Part | Title | Focus | Status |
 | :--- | :--- | :--- | :--- |
-| **01** | **When SharedPreferences Fails** | Resilience, Circuit Breakers, LRU Eviction | ![✅ **Published**](https://dev.to/devmatrash/when-sharedpreferences-fails-architecting-resilient-cache-infrastructure-for-production-flutter-3j3d) |
-| **02** | **The JWT Token Incident** | Security, Keychain, Keystore, Encryption | ![✅ **Published**](https://dev.to/devmatrash/the-jwt-token-incident-why-your-flutter-apps-cache-isnt-secure-and-how-to-fix-it-56i5) |
-| **03** | **From 0.3% Crash Rate to Zero** | Performance, Batching, Concurrency | ![✅ **Published**](https://dev.to/devmatrash/from-03-crash-rate-to-zero-scaling-flutter-cache-with-batching-locking-and-observable-state-24oi) |
+| **01** | **When SharedPreferences Fails** | Resilience, Circuit Breakers, LRU Eviction | [✅ **Published**](https://dev.to/devmatrash/when-sharedpreferences-fails-architecting-resilient-cache-infrastructure-for-production-flutter-3j3d) |
+| **02** | **The JWT Token Incident** | Security, Keychain, Keystore, Encryption | [✅ **Published**](https://dev.to/devmatrash/the-jwt-token-incident-why-your-flutter-apps-cache-isnt-secure-and-how-to-fix-it-56i5) |
+| **03** | **From 0.3% Crash Rate to Zero** | Performance, Batching, Concurrency | [✅ **Published**](https://dev.to/devmatrash/from-03-crash-rate-to-zero-scaling-flutter-cache-with-batching-locking-and-observable-state-24oi) |
 
 *(Links will be updated as articles go live)*
 

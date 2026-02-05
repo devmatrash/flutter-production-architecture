@@ -1,0 +1,38 @@
+name: flutter_production_architecture
+description: "Engineering Production-Ready Flutter Apps"
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.10.8
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  #route management:
+  auto_route: ^11.1.0
+
+  # dependency injection:
+  get_it: ^9.2.0
+
+  # cache management:
+  shared_preferences: ^2.5.4
+  flutter_secure_storage: ^10.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  #route management:
+  auto_route_generator: ^10.4.0
+  build_runner: ^2.10.5
+
+flutter:
+
+  uses-material-design: true

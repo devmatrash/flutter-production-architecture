@@ -6,28 +6,7 @@ import 'package:flutter_production_architecture/core/navigation/domain/entities/
 import 'package:flutter_production_architecture/core/navigation/domain/repositories/i_navigation_event_bus.dart';
 import 'package:flutter_production_architecture/core/navigation/domain/repositories/i_navigation_listener.dart';
 
-/// Logs navigation events using structured logging
-///
-/// This is the primary navigation listener for development and production monitoring.
-/// It outputs navigation events to the console using Dart's developer log API.
-///
-/// Features:
-/// - Structured logging with consistent format
-/// - Development vs production modes (different verbosity)
-/// - Error isolation (errors don't affect other listeners)
-/// - Arguments logging (dev only for privacy)
-/// - Performance timing indicators
-///
-/// Log Format:
-/// ```
-/// [Navigation] Navigation: SplashRoute → HomeRoute (push)
-/// [Navigation]   Arguments: {userId: 123, mode: edit}  // dev only
-/// [Navigation]   Timestamp: 2026-02-17T10:30:45.123Z
-/// ```
-///
-/// Usage:
-/// This listener is automatically registered by [NavigationServiceProvider]
-/// and starts listening immediately after app initialization.
+/// Navigation listener that logs route transitions to console (debug mode only)
 class LoggingNavigationListener implements INavigationListener {
   @override
   String get name => 'LoggingNavigationListener';
@@ -53,10 +32,7 @@ class LoggingNavigationListener implements INavigationListener {
     log('$name started', name: 'Navigation');
   }
 
-  /// Handle incoming navigation event
-  ///
-  /// Logs event details in debug mode only. In production, the listener remains
-  /// registered but silent to avoid log noise and optimize performance.
+  /// Logs navigation event details (debug mode only, silent in production)
   void _onNavigationEvent(NavigationEvent event) {
     // Skip logging entirely in production builds
     if (!kDebugMode) return;
@@ -82,13 +58,7 @@ class LoggingNavigationListener implements INavigationListener {
     }
   }
 
-  /// Log detailed event information (debug mode only)
-  ///
-  /// Includes:
-  /// - Route paths
-  /// - Arguments (if present)
-  /// - Timestamp
-  /// - Session ID (when implemented)
+  /// Logs additional route details (paths, arguments, timestamp, session)
   void _logDebugDetails(NavigationEvent event) {
     // Log full path information
     if (event.from != null) {
@@ -114,10 +84,6 @@ class LoggingNavigationListener implements INavigationListener {
     }
   }
 
-  /// Handle errors in the event stream
-  ///
-  /// This should rarely occur, but we log it to help diagnose issues
-  /// with the event bus or listener implementation.
   void _onError(Object error, StackTrace stack) {
     log(
       'Error in $name event stream: $error',

@@ -11,9 +11,7 @@ import 'package:flutter_production_architecture/core/navigation/domain/repositor
 class AutoRouteObserverAdapter extends AutoRouteObserver {
   final INavigationEventBus _eventBus;
 
-  AutoRouteObserverAdapter(this._eventBus) {
-    log('AutoRouteObserverAdapter initialized', name: 'Navigation');
-  }
+  AutoRouteObserverAdapter(this._eventBus);
 
   @override
   void didPush(Route route, Route? previousRoute) {
@@ -87,15 +85,11 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
   RouteInfo _extractRouteInfo(Route route) {
     final rawName = route.settings.name;
 
-    // Early return for unknown routes
     if (rawName == null || rawName.isEmpty) {
       return const RouteInfo(name: 'UnknownRoute', path: '/unknown');
     }
 
-    // Remove leading slash for the route name (e.g., '/home' -> 'home')
     final name = rawName.startsWith('/') ? rawName.substring(1) : rawName;
-
-    // Ensure the path always starts with a slash
     final path = rawName.startsWith('/') ? rawName : '/$rawName';
 
     return RouteInfo(name: name, path: path);
@@ -134,6 +128,7 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
   }
 
   /// Sanitize sensitive data (redacts passwords, tokens, etc.)
+  /// Note: Only sanitizes top-level keys (shallow). Nested objects are not traversed.
   Map<String, dynamic> _sanitizeArguments(Map<String, dynamic> args) {
     final sanitized = <String, dynamic>{};
 

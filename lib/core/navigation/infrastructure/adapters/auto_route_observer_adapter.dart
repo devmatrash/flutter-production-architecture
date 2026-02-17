@@ -16,7 +16,7 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
   AutoRouteObserverAdapter(
     this._eventBus, [
     ArgumentSanitizationConfig? sanitizationConfig,
-  ]) : _sanitizationConfig = sanitizationConfig ?? ArgumentSanitizationConfig.production();
+  ]) : _sanitizationConfig = sanitizationConfig ?? ArgumentSanitizationConfig.strict;
 
   @override
   void didPush(Route route, Route? previousRoute) {

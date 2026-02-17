@@ -18,8 +18,8 @@ class NavigationServiceProvider implements ServiceProvider {
     it.registerLazySingleton<INavigationEventBus>(() => NavigationEventBusImpl());
 
     final sanitizationConfig = kDebugMode
-        ? ArgumentSanitizationConfig.development()
-        : ArgumentSanitizationConfig.production();
+        ? ArgumentSanitizationConfig.disabled()
+        : ArgumentSanitizationConfig.strict;
 
     it.registerLazySingleton<AutoRouteObserverAdapter>(
       () => AutoRouteObserverAdapter(

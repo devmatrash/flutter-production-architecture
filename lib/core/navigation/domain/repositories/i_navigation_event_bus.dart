@@ -11,9 +11,6 @@ abstract class INavigationEventBus {
   /// Check if any listeners are active (for performance optimization)
   bool get hasActiveListeners;
 
-  /// Number of active subscriptions
-  int get subscriberCount;
-
   /// Close stream and release resources
   Future<void> dispose();
 }

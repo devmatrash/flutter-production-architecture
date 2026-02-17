@@ -38,9 +38,6 @@ class NavigationEventBusImpl implements INavigationEventBus {
   bool get hasActiveListeners => !_controller.isClosed && _controller.hasListener;
 
   @override
-  int get subscriberCount => hasActiveListeners ? 1 : 0;
-
-  @override
   Future<void> dispose() async {
     if (!_controller.isClosed) {
       await _controller.close();

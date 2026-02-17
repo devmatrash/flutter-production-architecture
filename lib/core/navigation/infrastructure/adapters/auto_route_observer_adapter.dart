@@ -85,44 +85,20 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
 
   /// Extract platform-agnostic route info from Route
   RouteInfo _extractRouteInfo(Route route) {
-    try {
-      String name = 'UnknownRoute';
-      String path = '/unknown';
+    final rawName = route.settings.name;
 
-      if (route.settings.name != null && route.settings.name!.isNotEmpty) {
-        name = route.settings.name!;
-        path = route.settings.name!;
-      }
-
-      if (route is PageRoute) {
-        final routeName = route.settings.name;
-        if (routeName != null && routeName.isNotEmpty) {
-          name = routeName;
-          path = routeName;
-
-          if (name.startsWith('/') && name.length > 1) {
-            name = name.substring(1);
-          }
-        }
-      }
-
-      return RouteInfo(
-        name: name,
-        path: path,
-      );
-    } catch (e, stack) {
-      log(
-        'Error extracting route info: $e',
-        name: 'AutoRouteObserverAdapter',
-        error: e,
-        stackTrace: stack,
-      );
-
-      return const RouteInfo(
-        name: 'ErrorRoute',
-        path: '/error',
-      );
+    // Early return for unknown routes
+    if (rawName == null || rawName.isEmpty) {
+      return const RouteInfo(name: 'UnknownRoute', path: '/unknown');
     }
+
+    // Remove leading slash for the route name (e.g., '/home' -> 'home')
+    final name = rawName.startsWith('/') ? rawName.substring(1) : rawName;
+
+    // Ensure the path always starts with a slash
+    final path = rawName.startsWith('/') ? rawName : '/$rawName';
+
+    return RouteInfo(name: name, path: path);
   }
 
   /// Extract route arguments with shallow serialization and sanitization

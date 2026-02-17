@@ -15,7 +15,11 @@ class NavigationServiceProvider implements ServiceProvider {
   Future<void> register(GetIt it) async {
     log('Initializing navigation observability', name: 'NavigationServiceProvider');
 
-    it.registerLazySingleton<INavigationEventBus>(() => NavigationEventBusImpl());
+    // Register EventBus with disposal to prevent memory leak
+    it.registerLazySingleton<INavigationEventBus>(
+      () => NavigationEventBusImpl(),
+      dispose: (bus) => bus.dispose(),
+    );
 
     final sanitizationConfig = kDebugMode
         ? ArgumentSanitizationConfig.disabled
@@ -36,7 +40,12 @@ class NavigationServiceProvider implements ServiceProvider {
 
     final loggingListener = LoggingNavigationListener();
     loggingListener.startListening(eventBus);
-    it.registerSingleton<LoggingNavigationListener>(loggingListener);
+
+    // Register listener with disposal to prevent subscription leak
+    it.registerSingleton<LoggingNavigationListener>(
+      loggingListener,
+      dispose: (listener) => listener.stopListening(),
+    );
   }
 }
 

@@ -55,22 +55,22 @@ class LoggingNavigationListener implements INavigationListener {
 
   /// Handle incoming navigation event
   ///
-  /// Logs event details with appropriate verbosity based on environment:
-  /// - Development: Full details including arguments
-  /// - Production: Basic route information only (privacy)
+  /// Logs event details in debug mode only. In production, the listener remains
+  /// registered but silent to avoid log noise and optimize performance.
   void _onNavigationEvent(NavigationEvent event) {
+    // Skip logging entirely in production builds
+    if (!kDebugMode) return;
+
     try {
-      // Basic navigation log (always shown)
+      // Basic navigation log
       final fromRoute = event.from?.name ?? 'App Start';
       log(
         'Navigation: $fromRoute → ${event.to.name} (${event.type.value})',
         name: 'Navigation',
       );
 
-      // Additional details in debug mode only
-      if (kDebugMode) {
-        _logDebugDetails(event);
-      }
+      // Additional details
+      _logDebugDetails(event);
     } catch (e, stack) {
       // Catch errors in logging to prevent affecting navigation
       log(
@@ -112,9 +112,6 @@ class LoggingNavigationListener implements INavigationListener {
     if (event.sessionId != null) {
       log('  Session: ${event.sessionId}', name: 'Navigation', level: 500);
     }
-
-    // Separator for readability in logs
-    log('---', name: 'Navigation', level: 500);
   }
 
   /// Handle errors in the event stream

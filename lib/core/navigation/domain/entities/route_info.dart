@@ -1,33 +1,15 @@
-/// Platform-agnostic route metadata
-///
-/// This entity represents essential information about a route without
-/// any dependency on specific routing libraries (auto_route, go_router, etc.).
-///
-/// Extracted from router-specific types and used throughout the navigation
-/// observability system for logging, analytics, and tracking purposes.
+/// Platform-agnostic route metadata (no dependency on auto_route/go_router)
 class RouteInfo {
-  /// Route name (e.g., 'SplashRoute', 'HomeRoute', 'ProfileRoute')
-  ///
-  /// This is typically the class name of the route in auto_route.
+  /// Route name (e.g., 'SplashRoute', 'HomeRoute')
   final String name;
 
   /// Full route path (e.g., '/splash', '/home', '/user/profile')
-  ///
-  /// The URL path or route identifier used for navigation.
   final String path;
 
-  /// Query parameters or route parameters
-  ///
-  /// Contains key-value pairs passed to the route.
-  /// Example: {'userId': '123', 'tab': 'settings'}
-  ///
-  /// Note: Shallow extraction only (top-level keys) for performance.
+  /// Route parameters (shallow extraction for performance)
   final Map<String, dynamic>? parameters;
 
-  /// Optional route title for analytics or UI display
-  ///
-  /// Human-readable title that may differ from the route name.
-  /// Example: 'User Profile' instead of 'ProfileRoute'
+  /// Optional human-readable title for analytics
   final String? title;
 
   const RouteInfo({
@@ -37,7 +19,6 @@ class RouteInfo {
     this.title,
   });
 
-  /// Create a copy with modified fields
   RouteInfo copyWith({
     String? name,
     String? path,

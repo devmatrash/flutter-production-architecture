@@ -1,69 +1,24 @@
 import 'package:flutter_production_architecture/core/navigation/domain/entities/route_info.dart';
 import 'package:flutter_production_architecture/core/navigation/domain/enums/navigation_event_type.dart';
 
-/// Immutable navigation event entity (domain model)
-///
-/// Represents a single navigation action in the application.
-/// Contains platform-agnostic data suitable for analytics, logging, and tracking.
-///
-/// This entity follows Clean Architecture principles:
-/// - No dependencies on routing libraries (auto_route, go_router)
-/// - No dependencies on analytics platforms (Firebase, Mixpanel)
-/// - Immutable and testable
-/// - Self-contained with all necessary context
-///
-/// Example:
-/// ```dart
-/// final event = NavigationEvent(
-///   type: NavigationEventType.push,
-///   from: RouteInfo(name: 'Home', path: '/home'),
-///   to: RouteInfo(name: 'Profile', path: '/profile'),
-///   timestamp: DateTime.now(),
-/// );
-/// ```
+/// Navigation event capturing route transitions with platform-agnostic data
 class NavigationEvent {
-  /// Type of navigation action (push, pop, replace, etc.)
+  /// Type of navigation (push, pop, replace, initial, tabChange)
   final NavigationEventType type;
 
-  /// Source route (null for initial route or app launch)
-  ///
-  /// The route the user is navigating FROM.
-  /// Will be null for:
-  /// - Initial app route (type = NavigationEventType.initial)
-  /// - First navigation after app start
+  /// Source route (null for initial/app launch)
   final RouteInfo? from;
 
-  /// Destination route
-  ///
-  /// The route the user is navigating TO.
-  /// This is always present.
+  /// Destination route (always present)
   final RouteInfo to;
 
-  /// Route arguments/parameters passed during navigation
-  ///
-  /// Contains shallow key-value pairs extracted from route arguments.
-  /// Sensitive data may be sanitized before storage.
-  ///
-  /// Example: {'userId': '123', 'mode': 'edit'}
-  ///
-  /// Note: This is nullable - not all routes have arguments.
+  /// Route arguments (sanitized for sensitive data)
   final Map<String, dynamic>? arguments;
 
-  /// When the navigation occurred
-  ///
-  /// Timestamp captured at the moment of navigation.
-  /// Useful for:
-  /// - Chronological event ordering
-  /// - Time-on-screen calculations
-  /// - Performance analysis
+  /// Navigation timestamp for ordering and timing analysis
   final DateTime timestamp;
 
-  /// Optional session identifier for tracking user sessions
-  ///
-  /// Reserved for future use (Phase 4: Session Tracking).
-  /// Currently nullable - will be populated when session management is implemented.
-  ///
-  /// Example: 'session_abc123_1234567890'
+  /// Optional session ID (reserved for Phase 4: Session Tracking)
   final String? sessionId;
 
   const NavigationEvent({
@@ -75,9 +30,7 @@ class NavigationEvent {
     this.sessionId,
   });
 
-  /// Create a copy with modified fields
-  ///
-  /// Useful for sanitizing arguments or adding session IDs retroactively.
+  /// Create a copy with modified fields (useful for sanitization)
   NavigationEvent copyWith({
     NavigationEventType? type,
     RouteInfo? from,
@@ -96,24 +49,22 @@ class NavigationEvent {
     );
   }
 
-  /// Check if this is a forward navigation (push, replace)
+  /// Check if navigation is forward (push/replace/initial)
   bool get isForwardNavigation =>
       type == NavigationEventType.push ||
       type == NavigationEventType.replace ||
       type == NavigationEventType.initial;
 
-  /// Check if this is a backward navigation (pop)
+  /// Check if navigation is backward (pop)
   bool get isBackwardNavigation => type == NavigationEventType.pop;
 
-  /// Check if this is a lateral navigation (tab change)
+  /// Check if navigation is lateral (tab change)
   bool get isLateralNavigation => type == NavigationEventType.tabChange;
 
   /// Check if this is the initial app route
   bool get isInitialRoute => type == NavigationEventType.initial;
 
-  /// Get a human-readable description of the navigation
-  ///
-  /// Example: "push: Home → Profile"
+  /// Human-readable description (e.g., "push: Home → Profile")
   String get description {
     final fromName = from?.name ?? 'App Start';
     return '${type.value}: $fromName → ${to.name}';

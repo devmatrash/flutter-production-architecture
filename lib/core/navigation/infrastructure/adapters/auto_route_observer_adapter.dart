@@ -2,6 +2,7 @@ import 'dart:developer';
 
 import 'package:auto_route/auto_route.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_production_architecture/core/navigation/domain/entities/argument_sanitization_config.dart';
 import 'package:flutter_production_architecture/core/navigation/domain/entities/navigation_event.dart';
 import 'package:flutter_production_architecture/core/navigation/domain/entities/route_info.dart';
 import 'package:flutter_production_architecture/core/navigation/domain/enums/navigation_event_type.dart';
@@ -10,8 +11,12 @@ import 'package:flutter_production_architecture/core/navigation/domain/repositor
 /// Adapter that bridges auto_route's RouteObserver to our domain layer
 class AutoRouteObserverAdapter extends AutoRouteObserver {
   final INavigationEventBus _eventBus;
+  final ArgumentSanitizationConfig _sanitizationConfig;
 
-  AutoRouteObserverAdapter(this._eventBus);
+  AutoRouteObserverAdapter(
+    this._eventBus, [
+    ArgumentSanitizationConfig? sanitizationConfig,
+  ]) : _sanitizationConfig = sanitizationConfig ?? ArgumentSanitizationConfig.production();
 
   @override
   void didPush(Route route, Route? previousRoute) {
@@ -127,14 +132,18 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
     }
   }
 
-  /// Sanitize sensitive data (redacts passwords, tokens, etc.)
+  /// Sanitize sensitive data based on configuration
   /// Note: Only sanitizes top-level keys (shallow). Nested objects are not traversed.
   Map<String, dynamic> _sanitizeArguments(Map<String, dynamic> args) {
+    if (!_sanitizationConfig.enabled) {
+      return args;
+    }
+
     final sanitized = <String, dynamic>{};
 
     args.forEach((key, value) {
       if (_isSensitiveKey(key)) {
-        sanitized[key] = '[REDACTED]';
+        sanitized[key] = _sanitizationConfig.placeholder;
       } else {
         sanitized[key] = value;
       }
@@ -146,24 +155,9 @@ class AutoRouteObserverAdapter extends AutoRouteObserver {
   /// Check if key name indicates sensitive data
   bool _isSensitiveKey(String key) {
     final lowerKey = key.toLowerCase();
-    const sensitivePatterns = [
-      'token',
-      'password',
-      'passwd',
-      'pwd',
-      'secret',
-      'apikey',
-      'api_key',
-      'auth',
-      'credential',
-      'private',
-      'ssn',
-      'credit',
-      'card',
-      'cvv',
-    ];
-
-    return sensitivePatterns.any((pattern) => lowerKey.contains(pattern));
+    return _sanitizationConfig.sensitiveKeys.any(
+      (pattern) => lowerKey.contains(pattern),
+    );
   }
 }
 
